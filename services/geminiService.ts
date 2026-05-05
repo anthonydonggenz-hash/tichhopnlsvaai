@@ -6,6 +6,7 @@ const getApiKey = () => {
 };
 
 const MODEL_NAME = "gemini-3-flash-preview";
+const PRO_MODEL_NAME = "gemini-3.1-pro-preview";
 
 export const suggestFromContent = async (
   topic: string,
@@ -43,14 +44,21 @@ export const suggestFromContent = async (
       });
     }
 
-    const response = await ai.models.generateContent({
+    const result = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: [{ role: 'user', parts }]
     });
     
-    return response.text || "Không có nội dung phản hồi.";
+    if (!result) {
+      throw new Error("AI không trả về kết quả.");
+    }
+    
+    return result.text || "Không có nội dung phản hồi.";
   } catch (err: any) {
     console.error("Ai Suggest Error:", err);
+    if (err.message && err.message.includes('text')) {
+       return "Lỗi: Không thể lấy văn bản từ phản hồi AI. Có thể nội dung bị chặn hoặc mô hình gặp sự cố.";
+    }
     return "Không thể trích xuất nội dung từ tài liệu. Vui lòng kiểm tra API Key.";
   }
 };
@@ -123,8 +131,8 @@ export const generateLessonPlan = async (
     3. Mọi nội dung bổ sung/tích hợp BẮT BUỘC phải đặt trong thẻ <span style="color:red">...</span>.
     4. Xuất kết quả hoàn chỉnh dưới dạng JSON theo đúng Schema đã quy định.`;
 
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
+    const result = await ai.models.generateContent({
+      model: PRO_MODEL_NAME,
       contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
       config: {
         systemInstruction: systemPrompt,
@@ -132,7 +140,15 @@ export const generateLessonPlan = async (
       }
     });
 
-    const responseText = response.text || "";
+    if (!result) {
+      throw new Error("AI không trả về kết quả (Result is undefined).");
+    }
+
+    const responseText = result.text || "";
+    if (!responseText) {
+      throw new Error("AI trả về phản hồi rỗng.");
+    }
+    
     // Clean up potential markdown formatting if any
     const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     
@@ -205,13 +221,14 @@ export const transformActivity = async (
   - ${methodType === 'gamification' ? 'Sử dụng các yếu tố trò chơi, luật chơi, điểm số.' : 'Sử dụng mô hình học tập ở nhà trước, đến lớp thực hành.'}
   - Trả về DUY NHẤT đối tượng JSON của hoạt động đã sửa.`;
 
-  const response = await ai.models.generateContent({
+  const result = await ai.models.generateContent({
     model: MODEL_NAME,
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     config: { responseMimeType: "application/json" }
   });
   
-  const responseText = response.text || "";
+  if (!result) throw new Error("AI error: Result is undefined");
+  const responseText = result.text || "";
   const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
   return JSON.parse(cleanJson);
 };
@@ -236,10 +253,11 @@ export const elaborateSection = async (
   - Sử dụng ngôn ngữ sư phạm chuẩn xác.
   - Có thể sử dụng thẻ <span style="color:red">...</span> cho các nội dung AI bổ sung.`;
 
-  const response = await ai.models.generateContent({
+  const result = await ai.models.generateContent({
     model: MODEL_NAME,
     contents: [{ role: 'user', parts: [{ text: prompt }] }]
   });
   
-  return response.text || "";
+  if (!result) throw new Error("AI error: Result is undefined");
+  return result.text || "";
 };

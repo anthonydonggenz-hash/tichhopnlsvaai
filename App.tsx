@@ -530,8 +530,8 @@ const App = () => {
                     <a href="https://edunexathaytrandong.netlify.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
                         <Bot size={14} className="text-gold-accent" /> <span>Website của tôi</span>
                     </a>
-                    <a href="https://zalo.me/3315699850490636950" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
-                        <MessageCircle size={14} className="text-green-400" /> <span>Zalo: Thầy Trần Đông</span>
+                    <a href="tel:0944562096" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
+                        <Phone size={14} className="text-blue-400" /> <span>SĐT: 0944562096</span>
                     </a>
                     <a href="https://www.facebook.com/tranvandong.vietnam" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
                         <Facebook size={14} className="text-blue-400" /> <span>Facebook cá nhân</span>
@@ -671,8 +671,8 @@ const App = () => {
                         <a href="https://edunexathaytrandong.netlify.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-tech-blue transition-all">
                             <Bot size={18} /> Website
                         </a>
-                        <a href="https://zalo.me/3315699850490636950" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-green-500 transition-all">
-                            <MessageCircle size={18} /> Zalo hỗ trợ
+                        <a href="tel:0944562096" className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-blue-500 transition-all">
+                            <Phone size={18} /> SĐT: 0944562096
                         </a>
                     </div>
                 </div>
