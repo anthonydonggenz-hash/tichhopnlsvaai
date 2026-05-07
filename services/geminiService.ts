@@ -6,8 +6,8 @@ const getApiKey = () => {
   return userKey || process.env.GEMINI_API_KEY || "";
 };
 
-const MODEL_NAME = "gemini-3-flash-preview";
-const PRO_MODEL_NAME = "gemini-3.1-pro-preview";
+const MODEL_NAME = "gemini-1.5-flash";
+const PRO_MODEL_NAME = "gemini-1.5-pro";
 
 export const suggestFromContent = async (
   topic: string,
