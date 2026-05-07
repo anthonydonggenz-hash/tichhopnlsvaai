@@ -2,7 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { ResultData } from "../types";
 
 const getApiKey = () => {
-  return process.env.GEMINI_API_KEY || "";
+  const userKey = typeof window !== 'undefined' ? localStorage.getItem("USER_GEMINI_API_KEY") : null;
+  return userKey || process.env.GEMINI_API_KEY || "";
 };
 
 const MODEL_NAME = "gemini-3-flash-preview";

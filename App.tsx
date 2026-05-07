@@ -34,6 +34,8 @@ const App = () => {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [uploadingFile, setUploadingFile] = useState<string | null>(null);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [userApiKey, setUserApiKey] = useState<string>(() => localStorage.getItem("USER_GEMINI_API_KEY") || "");
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   // Auto-hide notification
   useEffect(() => {
@@ -107,6 +109,18 @@ const App = () => {
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
+  };
+
+  const handleSaveApiKey = () => {
+    localStorage.setItem("USER_GEMINI_API_KEY", userApiKey);
+    setNotification({ message: "Đã lưu API Key cá nhân!", type: 'success' });
+    setShowApiKeyInput(false);
+  };
+
+  const handleClearApiKey = () => {
+    localStorage.removeItem("USER_GEMINI_API_KEY");
+    setUserApiKey("");
+    setNotification({ message: "Đã xóa API Key cá nhân, sử dụng mặc định.", type: 'success' });
   };
 
   const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -578,6 +592,58 @@ const App = () => {
 
             {/* Bottom Actions */}
             <div className="mt-auto flex flex-col gap-4">
+                {/* API Key Management */}
+                <div className="px-4 py-3 bg-white/5 rounded-xl border border-white/10 mb-2">
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                            <Settings size={14} className="text-slate-400" />
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cấu hình API Key</span>
+                        </div>
+                        <button 
+                            onClick={() => setShowApiKeyInput(!showApiKeyInput)}
+                            className="text-[10px] font-bold text-gold-accent hover:underline"
+                        >
+                            {showApiKeyInput ? 'Đóng' : (userApiKey ? 'Sửa' : 'Thiết lập')}
+                        </button>
+                    </div>
+
+                    {showApiKeyInput ? (
+                        <div className="space-y-2 animate-fade-in">
+                            <input 
+                                type="password"
+                                value={userApiKey}
+                                onChange={(e) => setUserApiKey(e.target.value)}
+                                placeholder="Nhập Gemini API Key..."
+                                className="w-full bg-[#050B18] border border-tech-blue/30 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-gold-accent"
+                            />
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={handleSaveApiKey}
+                                    className="flex-1 bg-gold-accent text-[#050B18] text-[10px] font-bold py-1.5 rounded hover:brightness-110"
+                                >
+                                    Lưu lại
+                                </button>
+                                {userApiKey && (
+                                    <button 
+                                        onClick={handleClearApiKey}
+                                        className="px-2 bg-red-500/20 text-red-500 text-[10px] font-bold py-1.5 rounded hover:bg-red-500/30"
+                                    >
+                                        Xóa
+                                    </button>
+                                )}
+                            </div>
+                            <p className="text-[9px] text-slate-500 italic">Lấy mã tại: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">AI Studio</a></p>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${userApiKey ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                            <span className="text-[11px] text-slate-400">
+                                {userApiKey ? 'Đang dùng Key cá nhân' : 'Dùng Key hệ thống'}
+                            </span>
+                        </div>
+                    )}
+                </div>
+
                 {currentMode === 'result' && (
                     <>
                         <button onClick={handleAudit} className="bg-gradient-to-br from-gold-accent to-gold-primary flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white text-sm font-bold tracking-wide transition-all active:scale-95 hover:brightness-110 shadow-lg">
