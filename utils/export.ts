@@ -35,14 +35,23 @@ export const exportToDocx = async (fullData: ResultData) => {
 
   const sections = [];
 
+  const getRegulationInfo = (grade: string) => {
+    if (grade === 'Mầm Non') return { title: 'DỰ THẢO KẾ HOẠCH TỔ CHỨC HOẠT ĐỘNG', sub: '(Theo Thông tư 49)' };
+    const g = parseInt(grade);
+    if (!isNaN(g) && g >= 1 && g <= 5) return { title: 'KẾ HOẠCH BÀI DẠY', sub: '(Theo Công văn 2345)' };
+    return { title: 'KHUNG KẾ HOẠCH BÀI DẠY', sub: '(Theo Công văn 5512)' };
+  };
+
+  const regInfo = getRegulationInfo(data.grade);
+
   // Title page / Header
   sections.push(
     new Paragraph({
       alignment: AlignmentType.CENTER,
       children: [
-        new TextRun({ text: "KHUNG KẾ HOẠCH BÀI DẠY", bold: true }),
-        new TextRun({ text: "\n(Kèm theo Công văn số 5512/BGDĐT-GDTrH)", italics: true, break: 1 }),
-        new TextRun({ text: "\nCăn cứ: Thông tư 02/2025/TT-BGDĐT & Quyết định 3439/QĐ-BGDĐT", bold: true, color: "C5A021", break: 1 }),
+        new TextRun({ text: regInfo.title, bold: true, size: 28 }),
+        new TextRun({ text: `\n${regInfo.sub}`, italics: true, break: 1 }),
+        new TextRun({ text: "\nCăn cứ: Thông tư 02 & QĐ 3439", bold: true, color: "C5A021", break: 1 }),
       ],
     }),
     new Paragraph({
@@ -159,11 +168,21 @@ export const exportToDocx = async (fullData: ResultData) => {
       sections.push(
         new Paragraph({
           spacing: { before: 200 },
-          border: { left: { color: "C5A021", size: 4 * 8, style: BorderStyle.SINGLE } },
-          shading: { fill: "F9F6E5" },
+          border: { left: { color: "3b82f6", size: 4 * 8, style: BorderStyle.SINGLE } },
+          shading: { fill: "eff6ff" },
           children: [
-            new TextRun({ text: "[TÍCH HỢP NLS & AI - TT 02 & QĐ 3439]", bold: true, color: "FF0000" }),
-            new TextRun({ text: `\n${stripHtml(act.digitalIntegration.description)}`, break: 1 })
+            new TextRun({ text: "TÍCH HỢP NĂNG LỰC SỐ & AI", bold: true, color: "3b82f6", size: 24 }),
+            new TextRun({ text: `\n- Mã năng lực: ${act.digitalIntegration.code}`, break: 1, italics: true }),
+            new TextRun({ text: `\n- Yêu cầu đạt: ${act.digitalIntegration.requirement}`, break: 1 }),
+            new TextRun({ text: "\n", break: 1 }),
+            ...getHighlightParts(act.digitalIntegration.description).flatMap(p => 
+               p.text.split('\n').map((line, lidx) => new TextRun({ 
+                 text: line, 
+                 color: p.highlight ? "FF0000" : undefined, 
+                 bold: p.highlight,
+                 break: lidx > 0 ? 1 : 0
+               }))
+            )
           ]
         })
       );
@@ -178,7 +197,18 @@ export const exportToDocx = async (fullData: ResultData) => {
   });
 
   const blob = await Packer.toBlob(doc);
-  saveAs(blob, `Giao_an_${data.topic.replace(/\s+/g, '_')}.docx`);
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Giao_an_${data.topic.replace(/\s+/g, '_')}.docx`;
+  document.body.appendChild(a);
+  a.click();
+  
+  // Cleanup
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 100);
 };
 
 const highlightIntegration = (text: string): string => {

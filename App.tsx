@@ -47,7 +47,6 @@ const App = () => {
   const textbookInputRef = useRef<HTMLInputElement>(null);
   const frameworkInputRef = useRef<HTMLInputElement>(null);
   const customFrameworkInputRef = useRef<HTMLInputElement>(null);
-  const jsonInputRef = useRef<HTMLInputElement>(null);
 
   // --- HANDLERS ---
   const handleGenerate = async () => {
@@ -87,50 +86,6 @@ const App = () => {
       console.error("Lỗi xuất file Word:", error);
       setNotification({ message: "Không thể tạo file Word. Thử lại sau.", type: 'error' });
     }
-  };
-
-  const handleExportJson = () => {
-    if (!resultData) {
-      setNotification({ message: "Chưa có dữ liệu để xuất!", type: 'error' });
-      return;
-    }
-    const exportData = {
-      formData,
-      resultData,
-      exportedAt: new Date().toISOString(),
-      version: "1.0"
-    };
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `Giao_an_${formData.topic.replace(/\s+/g, '_') || 'export'}.json`);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
-
-  const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target?.result as string);
-        if (json.formData) setFormData(json.formData);
-        if (json.resultData) {
-          setResultData(json.resultData);
-          setCurrentMode('result');
-        }
-        setNotification({ message: "Nhập dữ liệu thành công!", type: 'success' });
-      } catch (err) {
-        console.error("Lỗi nhập JSON:", err);
-        setNotification({ message: "File JSON không hợp lệ hoặc cấu trúc sai.", type: 'error' });
-      }
-    };
-    reader.readAsText(file);
-    // Reset input
-    if (e.target) e.target.value = '';
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'textbook' | 'framework' | 'customFramework') => {
@@ -469,7 +424,7 @@ const App = () => {
                               onChange={e => setFormData({...formData, selectedFramework: e.target.value})}
                           >
                               <option value="TT02">Tích hợp Năng Lực Số (Thông tư 02)</option>
-                              <option value="QD3439">Tích hợp AI (Quyết định 3439)</option>
+                              <option value="QD3439">Tích hợp AI (QĐ 3439)</option>
                               <option value="TT02_QD3439">Kết hợp cả Năng lực số và AI</option>
                           </select>
                       </div>
@@ -586,21 +541,6 @@ const App = () => {
             <nav className="flex flex-col gap-2 mb-8">
                 <div 
                     onClick={() => {
-                        setCurrentMode('create_input');
-                        setResultData(null);
-                        setFormData(prev => ({ ...prev, originalText: '' }));
-                    }} 
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 group ${
-                        currentMode === 'create_input' 
-                        ? 'bg-tech-blue shadow-[0_0_20px_rgba(59,130,246,0.3)] text-white scale-[1.02]' 
-                        : 'hover:bg-white/10 text-slate-400 hover:text-white'
-                    }`}
-                >
-                    <Sparkles size={18} className={currentMode === 'create_input' ? 'animate-pulse' : 'group-hover:rotate-12 transition-transform'} /> 
-                    <span className="text-sm font-bold tracking-wide">Soạn bài mới</span>
-                </div>
-                <div 
-                    onClick={() => {
                         setCurrentMode('integrate_input');
                         setResultData(null);
                         setFormData(prev => ({ ...prev, originalText: '' }));
@@ -620,43 +560,17 @@ const App = () => {
             <div className="mt-auto flex flex-col gap-4">
                 {currentMode === 'result' && (
                     <>
-                        <button onClick={handleAudit} className="bg-gradient-to-br from-gold-accent to-gold-primary flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white text-sm font-bold tracking-wide transition-all active:scale-95 hover:brightness-110 shadow-lg">
-                            <CheckCircle size={18} /> <span>Kiểm tra sư phạm</span>
-                        </button>
-                        {auditResult && (
-                            <div className="bg-slate-800 p-3 rounded border border-green-500/30 text-xs text-green-400 animate-fade-in">
-                                <p className="font-bold">Điểm sư phạm: {auditResult.score}/100</p>
-                                <p className="opacity-80">{auditResult.issues[0].msg}</p>
-                            </div>
-                        )}
                         <div className="flex flex-col gap-2 pt-4 border-t border-white/10">
-                            <div onClick={handleExportWord} className="flex h-9 items-center gap-2 rounded-full bg-slate-800 px-4 cursor-pointer hover:bg-slate-700 transition-colors border border-gold-accent/20 w-full justify-center">
-                                <FileIcon size={14} className="text-gold-accent" />
-                                <p className="text-white text-xs font-semibold">Xuất File Word Giáo Án đã Tích hợp</p>
-                            </div>
-                            <div onClick={handleExportJson} className="flex h-9 items-center gap-2 rounded-full bg-slate-800 px-4 cursor-pointer hover:bg-slate-700 transition-colors border border-blue-400/20 w-full justify-center">
-                                <FileJson size={14} className="text-blue-400" />
-                                <p className="text-white text-xs font-semibold">Xuất JSON</p>
-                            </div>
+                            <button 
+                                onClick={handleExportWord} 
+                                className="flex h-11 items-center gap-3 rounded-xl bg-slate-800 px-4 cursor-pointer hover:bg-slate-700 transition-all border border-gold-accent/40 w-full justify-center group active:scale-95"
+                            >
+                                <FileIcon size={18} className="text-gold-accent group-hover:scale-110 transition-transform" />
+                                <span className="text-white text-sm font-bold uppercase tracking-tight">Tải file Word (.docx)</span>
+                            </button>
                         </div>
                     </>
                 )}
-                
-                <div className="flex flex-col gap-2">
-                    <input 
-                      type="file" 
-                      ref={jsonInputRef} 
-                      className="hidden" 
-                      accept=".json" 
-                      onChange={handleImportJson} 
-                    />
-                    <div 
-                      onClick={() => jsonInputRef.current?.click()}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-white/5 hover:text-white transition-all text-slate-400"
-                    >
-                      <Download size={18} className="rotate-180" /> <span className="text-sm font-medium">Nhập dữ liệu (JSON)</span>
-                    </div>
-                </div>
             </div>
         </div>
       </aside>
@@ -702,7 +616,7 @@ const App = () => {
                     </h1>
                     <p className="text-xl md:text-2xl font-serif font-bold text-slate-500 mb-10 tracking-wide">Cùng thầy Trần Đông</p>
                     <div className="flex gap-6 mt-4">
-                        <button onClick={() => setCurrentMode('create_input')} className="px-10 py-5 rounded-2xl bg-gradient-to-br from-sidebar to-tech-blue-dark text-white font-bold shadow-2xl hover:translate-y-[-4px] active:translate-y-0 transition-all flex items-center gap-3 border border-white/10 text-lg">
+                        <button onClick={() => setCurrentMode('integrate_input')} className="px-10 py-5 rounded-2xl bg-gradient-to-br from-sidebar to-tech-blue-dark text-white font-bold shadow-2xl hover:translate-y-[-4px] active:translate-y-0 transition-all flex items-center gap-3 border border-white/10 text-lg">
                             <Sparkles size={20}/> Bắt đầu ngay
                         </button>
                     </div>

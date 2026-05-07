@@ -74,7 +74,7 @@ const LessonPlan5512View: React.FC<Props> = ({ fullData, onTransform, onElaborat
         <p className="font-bold text-sm uppercase text-slate-500 mb-1 font-sans">{regInfo.title}</p>
         <p className="italic text-xs text-slate-400 font-sans">{regInfo.sub}</p>
         <p className="font-bold text-sm text-gold-accent mt-2 font-sans flex items-center justify-center gap-2">
-            <Check size={14} /> Căn cứ: Thông tư 02 & Quyết định 3439
+            <Check size={14} /> Căn cứ: Thông tư 02 & QĐ 3439
         </p>
         {mode === 'integration' && (
           <div className="inline-block mt-3 px-4 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-bold uppercase tracking-wider">

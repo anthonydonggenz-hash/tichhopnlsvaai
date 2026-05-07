@@ -2,9 +2,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ResultData } from "../types";
 
 const getApiKey = () => {
-  // In Vite, process.env is usually not available unless defined in vite.config.ts
-  // or using import.meta.env.
-  // We mapped process.env.GEMINI_API_KEY in vite.config.ts
   return process.env.GEMINI_API_KEY || "";
 };
 
@@ -85,7 +82,7 @@ export const generateLessonPlan = async (
       }
     }
 
-    const systemPrompt = `Bạn là chuyên gia giáo dục cao cấp, am hiểu sâu sắc về hệ thống quy định của Bộ Giáo dục và Đào tạo Việt Nam.
+    const systemPrompt = `Bạn là chuyên gia giáo dục cao cấp, am hiểu sâu sắc về hệ thống quy định của Bộ Giáo dục và Đào tạo Việt Nam, đặc biệt là Thông tư 02/2025/TT-BGDĐT và Quyết định 3439/QĐ-BGDĐT.
     NHIỆM VỤ: Soạn thảo hoặc Tích hợp ${isTT02 ? 'Năng lực số (NLS) theo Thông tư 02' : ''} ${isTT02 && isQD3439 ? 'và' : ''} ${isQD3439 ? 'Trí tuệ nhân tạo (AI) theo Quyết định 3439' : ''} vào giáo án.
 
     TIÊU CHUẨN CẤU TRÚC GIÁO ÁN:
@@ -94,47 +91,44 @@ export const generateLessonPlan = async (
     - Nếu là 2345: Tập trung vào các hoạt động học tập của HS, Mục tiêu Yêu cầu cần đạt, Đánh giá.
     - Nếu là TT 49 (Mầm non): Mục đích - Yêu cầu, Chuẩn bị, Tiến hành hoạt động.
 
-    NGUYÊN TẮC "BẢO TỒN TUYỆT ĐỐI 100%" (Khi ở chế độ Tích hợp):
-    1. GIỮ NGUYÊN 100% NỘI DUNG GIÁO ÁN GỐC: Tuyệt đối không được viết lại, không thay đổi, không rút gọn nội dung cũ của giáo viên. Giữ nguyên bố cục, trình tự.
-    2. CHỈ CHÈN THÊM NỘI DUNG TÍCH HỢP: Chèn các khối tích hợp vào đúng vị trí sau nội dung phù hợp.
-    3. ĐỊNH DẠNG CHỮ MÀU ĐỎ: Toàn bộ nội dung tích hợp và tiêu đề của nó PHẢI hiển thị bằng chữ màu đỏ (nằm trong thẻ <span style="color:red">...</span>).
+    YÊU CẦU VỀ NĂNG LỰC SỐ (Circular 02):
+    - Mã chỉ báo phải TUYỆT ĐỐI CHÍNH XÁC theo cú pháp: (NLS x.x – TCx.x – CBx.x.x – Bậc …)
+    - x.x: Miền và năng lực thành phần (6 miền, 24 năng lực).
+    - TC: Tiêu chí.
+    - CB: Chỉ báo cụ thể.
+    - Bậc: Bậc thành thạo (1-8).
 
-    YÊU CẦU TÍCH HỢP CHI TIẾT:
-    ${isTT02 ? `
-    CĂN CỨ THÔNG TƯ 02 (NĂNG LỰC SỐ):
-    - Mã chỉ báo phải CỰC KỲ CHI TIẾT theo cú pháp: (NLS x.x – TCx.x – CBx.x.x – Bậc …). 
-      Trong đó: x.x là miền và năng lực thành phần, TC là tiêu chí, CB là chỉ báo cụ thể từ khung NLS.
-    - Phải mô tả hành động số cụ thể của học sinh.
-    ` : ''}
-
-    ${isQD3439 ? `
-    CĂN CỨ QUYẾT ĐỊNH 3439 (AI):
-    - Chỉ tích hợp nếu bài học thực sự phù hợp với AI.
-    - Mã năng lực AI theo cú pháp: AI: (NLa / NLb / NLc / NLd).
+    YÊU CẦU VỀ TRÍ TUỆ NHÂN TẠO (Decision 3439):
+    - Chỉ tích hợp nếu bài học thực sự phù hợp với AI, không khiên cưỡng.
+    - Mã năng lực AI theo cú pháp: AI: (NLa / NLb / NLc / NLd)
       + NLa: Tư duy lấy con người làm trung tâm.
       + NLb: Đạo đức AI.
       + NLc: Các kĩ thuật và ứng dụng AI.
       + NLd: Thiết kế hệ thống AI.
-    ` : ''}
 
-    CẤU TRÚC KHỐI CHÈN (PHẢI TUÂN THỦ 100%):
-    <span style="color:red">
-    🔴 [Tích hợp NLS & AI]
-    - Năng lực: [Ghi đủ mã NLS và mã AI nếu chọn cả hai]
-    - Mô tả: [Mô tả hành vi tích hợp cụ thể, thực tế]
+    CẤU TRÚC KHỐI CHÈN (TUÂN THỦ 100%):
+    Toàn bộ nội dung tích hợp phải nằm trong thẻ <span style="color:red">...</span> và trình bày đúng mẫu sau:
+    
+    🔴 [Tích hợp ${isTT02 && isQD3439 ? 'NLS & AI' : isTT02 ? 'NLS' : 'AI'}]
+    - Năng lực: [Ghi đủ mã NLS và mã AI theo đúng cú pháp yêu cầu trên]
+    - Mô tả: [Mô tả hành vi tích hợp cụ thể, bám sát bản chất hoạt động]
 
     🔴 [GV]
-    - [Hướng dẫn từng bước cho giáo viên triển khai, có thể nêu tên AI tool cụ thể nếu cần]
+    - [Hướng dẫn từng bước cho giáo viên triển khai, nêu rõ công cụ số/AI tool cụ thể]
 
     🔴 [HS]
-    - [Hành động cụ thể, rõ ràng của học sinh]
+    - [Hành động rõ ràng, cụ thể của học sinh]
 
     🔴 [Sản phẩm]
-    - [Sản phẩm số hoặc sản phẩm AI cụ thể mà HS tạo ra]
+    - [Sản phẩm số hoặc sản phẩm AI cụ thể mà học sinh tạo ra]
 
     🔴 [Đánh giá]
-    - [Tiêu chí đánh giá dựa trên CB Năng lực số hoặc Năng lực AI]
-    </span>
+    - [Tiêu chí đánh giá dựa trên chỉ báo CB của NLS hoặc Năng lực AI]
+
+    NGUYÊN TẮC "BẢO TỒN TUYỆT ĐỐI 100%" (Khi ở chế độ Tích hợp):
+    1. GIỮ NGUYÊN 100% NỘI DUNG GIÁO ÁN GỐC: Tuyệt đối không được viết lại, không thay đổi, không rút gọn nội dung cũ của giáo viên. Giữ nguyên bố cục, trình tự.
+    2. CHỈ CHÈN THÊM NỘI DUNG TÍCH HỢP: Chèn các khối tích hợp vào đúng vị trí sau nội dung phù hợp.
+    3. ĐỊNH DẠNG CHỮ MÀU ĐỎ: Toàn bộ nội dung tích hợp và tiêu đề của nó PHẢI hiển thị bằng chữ màu đỏ (nằm trong thẻ <span style="color:red">...</span>).
 
     ĐỊNH DẠNG ĐẦU RA: JSON.
     JSON Schema (BẮT BUỘC):
@@ -162,9 +156,19 @@ export const generateLessonPlan = async (
     
     YÊU CẦU CỤ THỂ:
     1. GIỮ NGUYÊN TUYỆT ĐỐI "NỘI DUNG GỐC": Bao gồm từng câu, từng chữ, dấu câu, bố cục và trình tự. KHÔNG ĐƯỢC THAY ĐỔI DÙ CHỈ MỘT CHỮ CỦA GIÁO VIÊN.
-    2. ${isTT02 ? 'Chèn mã chỉ báo Năng lực số chi tiết theo Thông tư 02.' : ''} ${isQD3439 ? 'Chèn nội dung tích hợp AI theo Quyết định 3439.' : ''}
-    3. Chèn trực tiếp các khối tích hợp đã chọn vào các phần: Mục tiêu, Thiết bị, Hoạt động ngay sau nội dung phù hợp.
-    4. Mọi nội dung chèn thêm PHẢI nằm trong thẻ <span style="color:red">...</span>.
+    2. TÍCH HỢP NĂNG LỰC:
+       - Nếu có NLS: Sử dụng đúng cú pháp "NLS: (NLS x.x – TCx.x – CBx.x.x – Bậc …)".
+       - Nếu có AI: Sử dụng đúng cú pháp "AI: (NLa / NLb / NLc / NLd)" (Chỉ thêm nếu thực sự cần thiết).
+       - Chỉ tích hợp cả hai nếu giáo viên chọn cả hai (${formData.selectedFramework === 'TT02_QD3439' ? 'ĐÃ CHỌN CẢ HAI' : 'CHỈ CHỌN MỘT TRONG HAI'}).
+    3. CÁCH CHÈN: Chèn trực tiếp khối tích hợp (nằm trong thẻ <span style="color:red">...</span>) vào sau các nội dung phù hợp trong Mục tiêu, Thiết bị hoặc Hoạt động.
+    4. CẤU TRÚC KHỐI ĐỎ (🔴):
+       🔴 [Tích hợp ...]
+       - Năng lực: ...
+       - Mô tả: ...
+       🔴 [GV]: ...
+       🔴 [HS]: ...
+       🔴 [Sản phẩm]: ...
+       🔴 [Đánh giá]: ...
     5. Không được viết lại giáo án. Xuất kết quả dưới dạng JSON theo Schema.`;
 
     const response = await ai.models.generateContent({
@@ -176,7 +180,6 @@ export const generateLessonPlan = async (
     });
 
     const responseText = response.text || "";
-    // Clean up potential markdown formatting if any
     const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     
     let parsedResult;
@@ -187,7 +190,6 @@ export const generateLessonPlan = async (
       throw new Error("AI trả về định dạng không hợp lệ. Vui lòng thử lại.");
     }
     
-    // Validate and fix structure
     if (!parsedResult.lessonPlan) {
       throw new Error("AI không trả về cấu trúc lessonPlan hợp lệ.");
     }
