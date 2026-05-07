@@ -1,13 +1,12 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { ResultData } from "../types";
 
 const getApiKey = () => {
-  const userKey = typeof window !== 'undefined' ? localStorage.getItem("USER_GEMINI_API_KEY") : null;
-  return userKey || process.env.GEMINI_API_KEY || "";
+  // In Vite, process.env is usually not available unless defined in vite.config.ts
+  // or using import.meta.env.
+  // We mapped process.env.GEMINI_API_KEY in vite.config.ts
+  return process.env.GEMINI_API_KEY || "";
 };
-
-const MODEL_NAME = "gemini-1.5-flash";
-const PRO_MODEL_NAME = "gemini-1.5-pro";
 
 export const suggestFromContent = async (
   topic: string,
@@ -23,16 +22,16 @@ export const suggestFromContent = async (
   
   try {
     const ai = new GoogleGenAI({ apiKey });
-
+    
     let prompt = `Bạn là trợ lý giảng dạy AI. 
-  NHIỆM VỤ: ${isIntegration ? 'Trích xuất TOÀN BỘ nội dung giáo án từ tài liệu đã tải lên.' : 'Phân tích tài liệu và đề xuất nội dung chi tiết cho bài dạy:'}
+  NHIỆM VỤ: ${isIntegration ? 'Trích xuất CHÍNH XÁC và TOÀN BỘ nội dung giáo án từ tài liệu đã tải lên.' : 'Phân tích tài liệu và đề xuất nội dung chi tiết cho bài dạy:'}
   Môn: ${subject}
   Lớp: ${grade}
   Chủ đề: ${topic}
   
   Yêu cầu: 
   ${isIntegration 
-    ? 'HÃY TRÍCH XUẤT 100% VĂN BẢN (KHÔNG TÓM TẮT, KHÔNG LƯỢC BỚT) có trong file giáo án của giáo viên. Mục tiêu là lấy lại nguyên bản nội dung để sau đó AI sẽ thực hiện tích hợp NLS/AI vào chính nội dung này. Giữ nguyên cấu trúc các mục (Mục tiêu, Thiết bị, Hoạt động GV-HS...).' 
+    ? 'HÃY TRÍCH XUẤT 100% VĂN BẢN (TUYỆT ĐỐI KHÔNG TÓM TẮT, KHÔNG LƯỢC BỚT, KHÔNG THAY ĐỔI TỪ NGỮ) có trong file giáo án của giáo viên. Mục tiêu là lấy lại nguyên bản nội dung để sau đó AI sẽ thực hiện tích hợp NLS/AI vào chính nội dung này. Giữ nguyên cấu trúc các mục (Mục tiêu, Thiết bị, Hoạt động GV-HS...). Nếu file là hình ảnh, hãy OCR thật kỹ từng câu chữ.' 
     : 'Trích xuất các kiến thức cốt lõi, ví dụ và bài tập thực hành từ tài liệu. Nếu không có tài liệu, hãy tự soạn nội dung chuẩn theo chương trình GDPT 2018.'}`;
 
     const parts: any[] = [{ text: prompt }];
@@ -45,21 +44,14 @@ export const suggestFromContent = async (
       });
     }
 
-    const result = await ai.models.generateContent({
-      model: MODEL_NAME,
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
       contents: [{ role: 'user', parts }]
     });
     
-    if (!result) {
-      throw new Error("AI không trả về kết quả.");
-    }
-    
-    return result.text || "Không có nội dung phản hồi.";
+    return response.text || "Không có nội dung phản hồi.";
   } catch (err: any) {
     console.error("Ai Suggest Error:", err);
-    if (err.message && err.message.includes('text')) {
-       return "Lỗi: Không thể lấy văn bản từ phản hồi AI. Có thể nội dung bị chặn hoặc mô hình gặp sự cố.";
-    }
     return "Không thể trích xuất nội dung từ tài liệu. Vui lòng kiểm tra API Key.";
   }
 };
@@ -79,27 +71,28 @@ export const generateLessonPlan = async (
     const ai = new GoogleGenAI({ apiKey });
 
     const systemPrompt = `Bạn là chuyên gia giáo dục cao cấp, am hiểu sâu sắc về chuyển đổi số giáo dục tại Việt Nam và các khung năng lực mới nhất.
-    NHIỆM VỤ: Tích hợp Năng lực số (NLS) và Trí tuệ nhân tạo (AI) vào giáo án một cách "siêu chi tiết".
-    
-    CĂN CỨ PHÁP LÝ CHI TIẾT (BẮT BUỘC):
-    1. Thông tư 02/2025/TT-BGDĐT: Khung năng lực số người học. 
-       - Yêu cầu dùng mã siêu chi tiết [Mã.Bậc] (Ví dụ: 1.1.TC1 cho Cơ bản, 1.1.TC3 cho Trung cấp, 1.1.TC5 cho Nâng cao). 
-       - TUYỆT ĐỐI không gán mã chung chung như NL1, NL2.
-    2. Quyết định 3439/QĐ-BGDĐT: Khung giáo dục AI.
-       - Yêu cầu dùng mã chi tiết [Miền.CấpHọc] (Ví dụ: NLa.TiểuHọc, NLc.THCS, NLb.THPT).
-    
-    NGUYÊN TẮC TÍCH HỢP "SIÊU CHI TIẾT":
-    - Với mỗi Hoạt động, hãy phân tích kỹ xem có thể lồng ghép việc sử dụng công cụ số (Office, Canva, Padlet, GeoGebra...) hoặc AI (Gemini, AI Chat, DeepL, MidJourney...) hay không.
-    - Phải ghi rõ năng lực thành phần được bồi dưỡng là gì, tại sao thao tác đó lại giúp đạt năng lực đó.
-    
-    NGUYÊN TẮC "BẢO TỒN NỘI DUNG GỐC":
-    - Giữ nguyên 100% nội dung gốc và chỉ chèn nội dung tích hợp (viết trong thẻ <span style="color:red">...</span>).
-    - Phải giữ đúng cấu trúc Công văn 5512 (4 bước hoạt động: Chuyển giao -> Thực hiện -> Báo cáo -> Kết luận).
-    
-    QUY TẮC HIỂN THỊ:
-    - Mọi nội dung tích hợp (mục tiêu, thao tác mới, sản phẩm mới) PHẢI nằm trong thẻ <span style="color:red">...</span>.
-    - Ví dụ: "...HS sử dụng AI <span style="color:red">[Tích hợp AI - NLc.THCS: Trải nghiệm AI trực quan]</span> để..."
-    
+    NHIỆM VỤ: Tích hợp Năng lực số (NLS) và Trí tuệ nhân tạo (AI) vào giáo án cũ theo nguyên tắc "BẢO TỒN TUYỆT ĐỐI".
+
+    NGUYÊN TẮC BẮT BUỘC:
+    1. GIỮ NGUYÊN GIÁO ÁN GỐC: Tuyệt đối không viết lại, không sửa câu chữ, không đổi tên hoạt động, không thay đổi mục tiêu, thiết bị, tiến trình, sản phẩm, đánh giá có sẵn. Không tự ý thêm hoạt động mới làm lệch giáo án. Mọi nội dung cũ phải được giữ nguyên 100%.
+    2. CHỈ CHÈN THÊM NỘI DUNG TÍCH HỢP: Bạn chỉ được chèn thêm các nội dung tích hợp Năng lực số và AI vào đúng vị trí phù hợp trong giáo án. Không gom tất cả ở cuối bài.
+    3. ĐỊNH DẠNG CHỮ MÀU ĐỎ: Toàn bộ nội dung tích hợp và tiêu đề của nó PHẢI hiển thị bằng chữ màu đỏ (nằm trong thẻ <span style="color:red">...</span>).
+    4. KHÔNG GÂY LÃNG PHÍ: Nếu một hoạt động không phù hợp để tích hợp, hãy bỏ qua. Chỉ tích hợp AI khi thực sự cần thiết và phù hợp với bài học.
+
+    MẪU TÍCH HỢP NĂNG LỰC SỐ:
+    <span style="color:red">[TÍCH HỢP NĂNG LỰC SỐ]
+    Mã chỉ báo: [Ghi rõ mã NLS phù hợp theo TT 02]
+    Nội dung tích hợp: [Viết ngắn gọn, cụ thể, bám sát hoạt động gốc]
+    Hướng dẫn triển khai: [Nêu rõ GV làm gì, HS làm gì, dùng công cụ số nào]</span>
+
+    MẪU TÍCH HỢP AI (Theo QĐ 3439):
+    <span style="color:red">[TÍCH HỢP AI THEO QĐ 3439]
+    Yêu cầu cần đạt: [Ghi rõ yêu cầu phù hợp theo QĐ 3439]
+    Mã năng lực AI: [Mã phù hợp]
+    Hướng dẫn triển khai: [Nêu cụ thể cách GV và HS dùng AI]
+    Sản phẩm học tập: [Sản phẩm HS tạo ra hoặc hoàn thiện]
+    Lưu ý sư phạm: [Hướng dẫn HS kiểm tra, phản biện, không sao chép máy móc]</span>
+
     ĐỊNH DẠNG ĐẦU RA: JSON.
     JSON Schema (BẮT BUỘC):
     {
@@ -119,37 +112,26 @@ export const generateLessonPlan = async (
     }`;
 
     const userPrompt = `Dưới đây là nội dung giáo án cần xử lý:
-    Chủ đề: ${formData.topic}
-    Môn: ${formData.subject}
-    Lớp: ${formData.grade}
+    Môn: ${formData.subject}, Lớp: ${formData.grade}, Chủ đề: ${formData.topic}
     
     NỘI DUNG GỐC:
     ${extractedContent || formData.originalText}
     
     YÊU CẦU CỤ THỂ:
-    1. Phân tích bài dạy trên để tìm điểm chạm Năng lực số (theo Thông tư 02) và AI (theo Quyết định 3439).
-    2. Tích hợp thêm các nội dung này trực tiếp vào các phần: Mục tiêu, Thiết bị, Hoạt động (GV/HS), Sản phẩm.
-    3. Mọi nội dung bổ sung/tích hợp BẮT BUỘC phải đặt trong thẻ <span style="color:red">...</span>.
-    4. Xuất kết quả hoàn chỉnh dưới dạng JSON theo đúng Schema đã quy định.`;
+    1. Giữ nguyên TOÀN BỘ văn bản trong "NỘI DUNG GỐC". Tuyệt đối không xóa hay sửa bất kỳ phần nào.
+    2. Chèn trực tiếp các khối [TÍCH HỢP NĂNG LỰC SỐ] và [TÍCH HỢP AI THEO QĐ 3439] vào các phần: Mục tiêu, Thiết bị, Hoạt động ngay sau nội dung phù hợp.
+    3. Mọi nội dung chèn thêm PHẢI nằm trong thẻ <span style="color:red">...</span>.
+    4. Không được viết lại giáo án. Xuất kết quả dưới dạng JSON theo Schema.`;
 
-    const result = await ai.models.generateContent({
-      model: PRO_MODEL_NAME,
-      contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [{ role: 'user', parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }],
       config: {
-        systemInstruction: systemPrompt,
         responseMimeType: "application/json"
       }
     });
 
-    if (!result) {
-      throw new Error("AI không trả về kết quả (Result is undefined).");
-    }
-
-    const responseText = result.text || "";
-    if (!responseText) {
-      throw new Error("AI trả về phản hồi rỗng.");
-    }
-    
+    const responseText = response.text || "";
     // Clean up potential markdown formatting if any
     const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     
@@ -222,14 +204,12 @@ export const transformActivity = async (
   - ${methodType === 'gamification' ? 'Sử dụng các yếu tố trò chơi, luật chơi, điểm số.' : 'Sử dụng mô hình học tập ở nhà trước, đến lớp thực hành.'}
   - Trả về DUY NHẤT đối tượng JSON của hoạt động đã sửa.`;
 
-  const result = await ai.models.generateContent({
-    model: MODEL_NAME,
-    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
     config: { responseMimeType: "application/json" }
   });
-  
-  if (!result) throw new Error("AI error: Result is undefined");
-  const responseText = result.text || "";
+  const responseText = response.text || "";
   const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
   return JSON.parse(cleanJson);
 };
@@ -254,11 +234,9 @@ export const elaborateSection = async (
   - Sử dụng ngôn ngữ sư phạm chuẩn xác.
   - Có thể sử dụng thẻ <span style="color:red">...</span> cho các nội dung AI bổ sung.`;
 
-  const result = await ai.models.generateContent({
-    model: MODEL_NAME,
-    contents: [{ role: 'user', parts: [{ text: prompt }] }]
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt
   });
-  
-  if (!result) throw new Error("AI error: Result is undefined");
-  return result.text || "";
+  return response.text || "";
 };

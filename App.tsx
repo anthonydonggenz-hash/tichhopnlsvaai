@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Wand2, Sparkles, Layers, CheckCircle, File as FileIcon, User, 
   Edit3, RefreshCw, Settings, Upload, Bot, FileText, X, Brain, Save, ArrowRight, Download, FileJson,
-  Facebook, Phone, MessageCircle, Users as UsersIcon, AlertCircle
+  Facebook, Phone, MessageCircle, Users as UsersIcon, AlertCircle, Youtube, Video
 } from 'lucide-react';
 import LessonPlan5512View from './components/LessonPlan5512View';
 import DigitalCompetencyView from './components/DigitalCompetencyView';
@@ -25,7 +25,7 @@ const App = () => {
   const [formData, setFormData] = useState<FormData>({
     grade: '10', subject: '', topic: '',
     duration: '1', template: '', classLevel: 'standard', 
-    integrationMode: 'inline', originalText: '', selectedFramework: 'TT02',
+    integrationMode: 'inline', originalText: '', selectedFramework: 'TT02_QD3439',
     textbookFileName: '', frameworkFileName: '', frameworkFileNames: [], customFrameworkFileName: ''
   });
   
@@ -34,8 +34,6 @@ const App = () => {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [uploadingFile, setUploadingFile] = useState<string | null>(null);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
-  const [userApiKey, setUserApiKey] = useState<string>(() => localStorage.getItem("USER_GEMINI_API_KEY") || "");
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
   // Auto-hide notification
   useEffect(() => {
@@ -109,18 +107,6 @@ const App = () => {
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
-  };
-
-  const handleSaveApiKey = () => {
-    localStorage.setItem("USER_GEMINI_API_KEY", userApiKey);
-    setNotification({ message: "Đã lưu API Key cá nhân!", type: 'success' });
-    setShowApiKeyInput(false);
-  };
-
-  const handleClearApiKey = () => {
-    localStorage.removeItem("USER_GEMINI_API_KEY");
-    setUserApiKey("");
-    setNotification({ message: "Đã xóa API Key cá nhân, sử dụng mặc định.", type: 'success' });
   };
 
   const handleImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -447,9 +433,6 @@ const App = () => {
                               value={formData.selectedFramework}
                               onChange={e => setFormData({...formData, selectedFramework: e.target.value})}
                           >
-                              <option value="TT02">Thông tư 02 (NLS Người học)</option>
-                              <option value="TT18">Thông tư 18 (NLS Giáo viên)</option>
-                              <option value="QD3439">Quyết định 3439 (Giáo dục AI)</option>
                               <option value="TT02_QD3439">Khung NLS theo Thông tư 02 và QĐ 3439</option>
                           </select>
                       </div>
@@ -541,14 +524,20 @@ const App = () => {
             <div className="mt-6 pt-6 border-t border-white/10 space-y-4">
                 <p className="text-[10px] font-bold text-gold-accent uppercase tracking-widest mb-2">Thông tin Giảng viên</p>
                 <div className="flex flex-col gap-3">
-                    <a href="https://edunexathaytrandong.netlify.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
+                    <a href="https://edunexaai.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
                         <Bot size={14} className="text-gold-accent" /> <span>Website của tôi</span>
                     </a>
-                    <a href="tel:0944562096" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
-                        <Phone size={14} className="text-blue-400" /> <span>SĐT: 0944562096</span>
+                    <a href="https://zalo.me/0944562096" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
+                        <MessageCircle size={14} className="text-green-400" /> <span>Zalo: 094.456.2096 (Thầy Đông)</span>
                     </a>
                     <a href="https://www.facebook.com/tranvandong.vietnam" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
                         <Facebook size={14} className="text-blue-400" /> <span>Facebook cá nhân</span>
+                    </a>
+                    <a href="https://www.tiktok.com/@trn.ng_ai.trainer" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
+                        <Video size={14} className="text-pink-500" /> <span>TikTok: @trn.ng_ai.trainer</span>
+                    </a>
+                    <a href="https://www.youtube.com/@AITrainer.Offical" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
+                        <Youtube size={14} className="text-red-500" /> <span>Youtube: AITrainer.Offical</span>
                     </a>
                     <a href="https://www.facebook.com/groups/24037123512640076" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-xs text-slate-400 hover:text-white transition-colors">
                         <UsersIcon size={14} className="text-gold-primary" /> <span>Cộng đồng AI cho GV</span>
@@ -592,58 +581,6 @@ const App = () => {
 
             {/* Bottom Actions */}
             <div className="mt-auto flex flex-col gap-4">
-                {/* API Key Management */}
-                <div className="px-4 py-3 bg-white/5 rounded-xl border border-white/10 mb-2">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                            <Settings size={14} className="text-slate-400" />
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cấu hình API Key</span>
-                        </div>
-                        <button 
-                            onClick={() => setShowApiKeyInput(!showApiKeyInput)}
-                            className="text-[10px] font-bold text-gold-accent hover:underline"
-                        >
-                            {showApiKeyInput ? 'Đóng' : (userApiKey ? 'Sửa' : 'Thiết lập')}
-                        </button>
-                    </div>
-
-                    {showApiKeyInput ? (
-                        <div className="space-y-2 animate-fade-in">
-                            <input 
-                                type="password"
-                                value={userApiKey}
-                                onChange={(e) => setUserApiKey(e.target.value)}
-                                placeholder="Nhập Gemini API Key..."
-                                className="w-full bg-[#050B18] border border-tech-blue/30 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-gold-accent"
-                            />
-                            <div className="flex gap-2">
-                                <button 
-                                    onClick={handleSaveApiKey}
-                                    className="flex-1 bg-gold-accent text-[#050B18] text-[10px] font-bold py-1.5 rounded hover:brightness-110"
-                                >
-                                    Lưu lại
-                                </button>
-                                {userApiKey && (
-                                    <button 
-                                        onClick={handleClearApiKey}
-                                        className="px-2 bg-red-500/20 text-red-500 text-[10px] font-bold py-1.5 rounded hover:bg-red-500/30"
-                                    >
-                                        Xóa
-                                    </button>
-                                )}
-                            </div>
-                            <p className="text-[9px] text-slate-500 italic">Lấy mã tại: <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">AI Studio</a></p>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${userApiKey ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
-                            <span className="text-[11px] text-slate-400">
-                                {userApiKey ? 'Đang dùng Key cá nhân' : 'Dùng Key hệ thống'}
-                            </span>
-                        </div>
-                    )}
-                </div>
-
                 {currentMode === 'result' && (
                     <>
                         <button onClick={handleAudit} className="bg-gradient-to-br from-gold-accent to-gold-primary flex items-center justify-center gap-2 w-full py-3 rounded-xl text-white text-sm font-bold tracking-wide transition-all active:scale-95 hover:brightness-110 shadow-lg">
@@ -734,11 +671,11 @@ const App = () => {
                     </div>
 
                     <div className="mt-16 flex items-center justify-center gap-8 border-t border-slate-200 pt-8">
-                        <a href="https://edunexathaytrandong.netlify.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-tech-blue transition-all">
+                        <a href="https://edunexaai.vercel.app/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-tech-blue transition-all">
                             <Bot size={18} /> Website
                         </a>
-                        <a href="tel:0944562096" className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-blue-500 transition-all">
-                            <Phone size={18} /> SĐT: 0944562096
+                        <a href="https://zalo.me/0944562096" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-green-500 transition-all">
+                            <MessageCircle size={18} /> Zalo: 094.456.2096
                         </a>
                     </div>
                 </div>
