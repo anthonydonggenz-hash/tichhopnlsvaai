@@ -68,30 +68,57 @@ export const generateLessonPlan = async (
   }
   
   try {
+    const isTT02 = formData.selectedFramework === 'TT02' || formData.selectedFramework === 'TT02_QD3439';
+    const isQD3439 = formData.selectedFramework === 'QD3439' || formData.selectedFramework === 'TT02_QD3439';
     const ai = new GoogleGenAI({ apiKey });
 
-    const systemPrompt = `Bạn là chuyên gia giáo dục cao cấp, am hiểu sâu sắc về chuyển đổi số giáo dục tại Việt Nam và các khung năng lực mới nhất.
-    NHIỆM VỤ: Tích hợp Năng lực số (NLS) và Trí tuệ nhân tạo (AI) vào giáo án cũ theo nguyên tắc "BẢO TỒN TUYỆT ĐỐI".
+    // Determine regulation based on grade
+    let gradeInfo = { level: 'Trung học', regulation: 'Công văn 5512/BGDĐT-GDTrH' };
+    if (formData.grade === 'Mầm Non') {
+      gradeInfo = { level: 'Mầm non', regulation: 'Thông tư 49/2020/TT-BGDĐT' };
+    } else {
+      const g = parseInt(formData.grade);
+      if (g >= 1 && g <= 5) {
+        gradeInfo = { level: 'Tiểu học', regulation: 'Công văn 2345/BGDĐT-GDTH' };
+      } else if (g >= 6 && g <= 12) {
+        gradeInfo = { level: 'Trung học', regulation: 'Công văn 5512/BGDĐT-GDTrH' };
+      }
+    }
 
-    NGUYÊN TẮC BẮT BUỘC:
-    1. GIỮ NGUYÊN GIÁO ÁN GỐC: Tuyệt đối không viết lại, không sửa câu chữ, không đổi tên hoạt động, không thay đổi mục tiêu, thiết bị, tiến trình, sản phẩm, đánh giá có sẵn. Không tự ý thêm hoạt động mới làm lệch giáo án. Mọi nội dung cũ phải được giữ nguyên 100%.
-    2. CHỈ CHÈN THÊM NỘI DUNG TÍCH HỢP: Bạn chỉ được chèn thêm các nội dung tích hợp Năng lực số và AI vào đúng vị trí phù hợp trong giáo án. Không gom tất cả ở cuối bài.
+    const systemPrompt = `Bạn là chuyên gia giáo dục cao cấp, am hiểu sâu sắc về hệ thống quy định của Bộ Giáo dục và Đào tạo Việt Nam.
+    NHIỆM VỤ: Soạn thảo hoặc Tích hợp ${isTT02 ? 'Năng lực số (NLS) theo Thông tư 02' : ''} ${isTT02 && isQD3439 ? 'và' : ''} ${isQD3439 ? 'Trí tuệ nhân tạo (AI) theo Quyết định 3439' : ''} vào giáo án.
+
+    TIÊU CHUẨN CẤU TRÚC GIÁO ÁN:
+    Sử dụng khung cấu trúc bài dạy chuẩn theo: ${gradeInfo.regulation} (Dành cho cấp ${gradeInfo.level}).
+    - Nếu là 5512: I. Mục tiêu (Kiến thức, Năng lực, Phẩm chất); II. Thiết bị; III. Tiến trình (4 hoạt động: Xác định vấn đề -> Hình thành kiến thức -> Luyện tập -> Vận dụng).
+    - Nếu là 2345: Tập trung vào các hoạt động học tập của HS, Mục tiêu Yêu cầu cần đạt, Đánh giá.
+    - Nếu là TT 49 (Mầm non): Mục đích - Yêu cầu, Chuẩn bị, Tiến hành hoạt động.
+
+    NGUYÊN TẮC "BẢO TỒN TUYỆT ĐỐI 100%" (Khi ở chế độ Tích hợp):
+    1. GIỮ NGUYÊN 100% NỘI DUNG GIÁO ÁN GỐC: Tuyệt đối không được viết lại, không thay đổi, không rút gọn nội dung cũ của giáo viên. Giữ nguyên bố cục, trình tự.
+    2. CHỈ CHÈN THÊM NỘI DUNG TÍCH HỢP: Chèn các khối tích hợp vào đúng vị trí sau nội dung phù hợp.
     3. ĐỊNH DẠNG CHỮ MÀU ĐỎ: Toàn bộ nội dung tích hợp và tiêu đề của nó PHẢI hiển thị bằng chữ màu đỏ (nằm trong thẻ <span style="color:red">...</span>).
-    4. KHÔNG GÂY LÃNG PHÍ: Nếu một hoạt động không phù hợp để tích hợp, hãy bỏ qua. Chỉ tích hợp AI khi thực sự cần thiết và phù hợp với bài học.
 
-    MẪU TÍCH HỢP NĂNG LỰC SỐ:
-    <span style="color:red">[TÍCH HỢP NĂNG LỰC SỐ]
-    Mã chỉ báo: [Ghi rõ mã NLS phù hợp theo TT 02]
-    Nội dung tích hợp: [Viết ngắn gọn, cụ thể, bám sát hoạt động gốc]
-    Hướng dẫn triển khai: [Nêu rõ GV làm gì, HS làm gì, dùng công cụ số nào]</span>
+    YÊU CẦU TÍCH HỢP CHI TIẾT:
+    ${isTT02 ? `
+    CĂN CỨ THÔNG TƯ 02 (NĂNG LỰC SỐ):
+    - Mã chỉ báo phải SÂU và CHI TIẾT (Ví dụ: 1.1.2, 2.3.1, 5.2.1...).
+    - Mô tả hành động số cụ thể của HS: HS làm gì với công cụ số để đạt năng lực đó.
+    MẪU: <span style="color:red">[TÍCH HỢP NĂNG LỰC SỐ - TT 02]
+    Mã chỉ báo chi tiết: [Mã 3 chữ số]
+    Nội dung tích hợp: [Mô tả chi tiết hành vi số]
+    Công cụ số: [Tên công cụ]</span>
+    ` : ''}
 
-    MẪU TÍCH HỢP AI (Theo QĐ 3439):
-    <span style="color:red">[TÍCH HỢP AI THEO QĐ 3439]
-    Yêu cầu cần đạt: [Ghi rõ yêu cầu phù hợp theo QĐ 3439]
-    Mã năng lực AI: [Mã phù hợp]
-    Hướng dẫn triển khai: [Nêu cụ thể cách GV và HS dùng AI]
-    Sản phẩm học tập: [Sản phẩm HS tạo ra hoặc hoàn thiện]
-    Lưu ý sư phạm: [Hướng dẫn HS kiểm tra, phản biện, không sao chép máy móc]</span>
+    ${isQD3439 ? `
+    CĂN CỨ QUYẾT ĐỊNH 3439 (AI):
+    - Chèn nội dung hướng dẫn sử dụng AI (Prompting, Phản biện AI, Đạo đức AI).
+    - Hướng dẫn HS cách kiểm chứng kết quả từ AI.
+    MẪU: <span style="color:red">[TÍCH HỢP AI - QĐ 3439]
+    Năng lực AI: [Mã NL theo QĐ 3439]
+    Hoạt động với AI: [Cách HS tương tác với AI]
+    Lưu ý sư phạm: [Phản biện, không lạm dụng]</span>
+    ` : ''}
 
     ĐỊNH DẠNG ĐẦU RA: JSON.
     JSON Schema (BẮT BUỘC):
@@ -114,14 +141,15 @@ export const generateLessonPlan = async (
     const userPrompt = `Dưới đây là nội dung giáo án cần xử lý:
     Môn: ${formData.subject}, Lớp: ${formData.grade}, Chủ đề: ${formData.topic}
     
-    NỘI DUNG GỐC:
+    NỘI DUNG GỐC (BẮT BUỘC GIỮ NGUYÊN 100%):
     ${extractedContent || formData.originalText}
     
     YÊU CẦU CỤ THỂ:
-    1. Giữ nguyên TOÀN BỘ văn bản trong "NỘI DUNG GỐC". Tuyệt đối không xóa hay sửa bất kỳ phần nào.
-    2. Chèn trực tiếp các khối [TÍCH HỢP NĂNG LỰC SỐ] và [TÍCH HỢP AI THEO QĐ 3439] vào các phần: Mục tiêu, Thiết bị, Hoạt động ngay sau nội dung phù hợp.
-    3. Mọi nội dung chèn thêm PHẢI nằm trong thẻ <span style="color:red">...</span>.
-    4. Không được viết lại giáo án. Xuất kết quả dưới dạng JSON theo Schema.`;
+    1. GIỮ NGUYÊN TUYỆT ĐỐI "NỘI DUNG GỐC": Bao gồm từng câu, từng chữ, dấu câu, bố cục và trình tự. KHÔNG ĐƯỢC THAY ĐỔI DÙ CHỈ MỘT CHỮ CỦA GIÁO VIÊN.
+    2. ${isTT02 ? 'Chèn mã chỉ báo Năng lực số chi tiết theo Thông tư 02.' : ''} ${isQD3439 ? 'Chèn nội dung tích hợp AI theo Quyết định 3439.' : ''}
+    3. Chèn trực tiếp các khối tích hợp đã chọn vào các phần: Mục tiêu, Thiết bị, Hoạt động ngay sau nội dung phù hợp.
+    4. Mọi nội dung chèn thêm PHẢI nằm trong thẻ <span style="color:red">...</span>.
+    5. Không được viết lại giáo án. Xuất kết quả dưới dạng JSON theo Schema.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",

@@ -165,20 +165,55 @@ const App = () => {
                   
                   const reader = new FileReader();
                   reader.onloadend = async () => {
-                      const base64Data = (reader.result as string).split(',')[1];
-                      const { suggestFromContent } = await import('./services/geminiService');
-                      const suggestion = await suggestFromContent(
-                          formData.topic, 
-                          formData.subject, 
-                          formData.grade, 
-                          { data: base64Data, mimeType: firstFile.type },
-                          currentMode === 'integrate_input'
-                      );
-                      setFormData(prev => ({ ...prev, originalText: suggestion }));
-                      setIsSuggesting(false);
-                      setNotification({ message: "Đã cập nhật nội dung từ tài liệu!", type: 'success' });
+                      const arrayBuffer = reader.result as ArrayBuffer;
+                      let filePayload: { data: string, mimeType: string } | undefined;
+                      
+                      try {
+                          if (firstFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+                              // If DOCX, extract text locally using mammoth
+                              const mammoth = await import('mammoth');
+                              const result = await mammoth.extractRawText({ arrayBuffer });
+                              const extractedText = result.value;
+                              
+                              // Check if extraction actually got any text
+                              if (!extractedText.trim()) {
+                                  throw new Error("File Word này dường như không có nội dung văn bản có thể trích xuất.");
+                              }
+
+                              // Convert UTF-8 to base64 safely
+                              const utf8Bytes = new TextEncoder().encode(extractedText);
+                              const base64Text = btoa(Array.from(utf8Bytes).map(b => String.fromCharCode(b)).join(''));
+                              filePayload = { data: base64Text, mimeType: 'text/plain' };
+                          } else if (firstFile.type === 'application/pdf' || firstFile.type.startsWith('image/')) {
+                              // For PDF, Images, etc. let Gemini handle it
+                              const base64Data = btoa(
+                                  new Uint8Array(arrayBuffer)
+                                      .reduce((data, byte) => data + String.fromCharCode(byte), '')
+                              );
+                              filePayload = { data: base64Data, mimeType: firstFile.type };
+                          } else {
+                              // Unsupported type for Gemini Extraction
+                              throw new Error(`Định dạng file (${firstFile.name.split('.').pop()}) chưa được hỗ trợ trích xuất tự động. Vui lòng sử dụng file PDF, DOCX hoặc Ảnh.`);
+                          }
+
+                          const { suggestFromContent } = await import('./services/geminiService');
+                          const suggestion = await suggestFromContent(
+                              formData.topic, 
+                              formData.subject, 
+                              formData.grade, 
+                              filePayload,
+                              currentMode === 'integrate_input'
+                          );
+                          setFormData(prev => ({ ...prev, originalText: suggestion }));
+                          setIsSuggesting(false);
+                          setNotification({ message: "Đã cập nhật nội dung từ tài liệu!", type: 'success' });
+                      } catch (err: any) {
+                          console.error("Lỗi xử lý file Gemini:", err);
+                          setNotification({ message: "Lỗi trích xuất nội dung từ file. Vui lòng thử lại.", type: 'error' });
+                          setIsSuggesting(false);
+                      }
                   };
-                  reader.readAsDataURL(firstFile);
+                  reader.readAsArrayBuffer(firstFile);
               }
           } catch (error) {
               console.error('File processing error:', error);
@@ -377,7 +412,7 @@ const App = () => {
                   {/* 2. Digital Framework */}
                   <div className="border border-dashed border-slate-300 rounded-xl p-5 hover:bg-slate-50 transition-colors">
                       <div className="flex items-center justify-between mb-3">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">2. Khung NLS</label>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">2. Khung Năng Lực Số / Tích hợp AI</label>
                           <span className="text-[9px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded">Ảnh/PDF/PPT/Excel</span>
                       </div>
                       
@@ -427,13 +462,15 @@ const App = () => {
                       )}
 
                       <div className="mt-4 pt-4 border-t border-slate-100">
-                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Chọn Khung Năng Lực & AI tích hợp</label>
+                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">CHỌN HÌNH THỨC TÍCH HỢP</label>
                           <select 
                               className="w-full bg-white border border-slate-200 rounded-lg p-2 text-xs focus:outline-none focus:border-gold-accent transition-all font-medium"
                               value={formData.selectedFramework}
                               onChange={e => setFormData({...formData, selectedFramework: e.target.value})}
                           >
-                              <option value="TT02_QD3439">Khung NLS theo Thông tư 02 và QĐ 3439</option>
+                              <option value="TT02">Tích hợp Năng Lực Số (Thông tư 02)</option>
+                              <option value="QD3439">Tích hợp AI (Quyết định 3439)</option>
+                              <option value="TT02_QD3439">Kết hợp cả Năng lực số và AI</option>
                           </select>
                       </div>
                   </div>
@@ -641,7 +678,7 @@ const App = () => {
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-slate-800 font-serif">Kế hoạch bài dạy chi tiết</h2>
-                        <p className="text-xs text-slate-500 font-medium">Đã tích hợp Năng lực số (TT 02) & Tích hợp AI (QĐ 3439)</p>
+                    <p className="text-xs text-slate-500 font-medium">Đã tích hợp Năng lực số (TT 02) & Tích hợp AI (QĐ 3439)</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
@@ -691,7 +728,7 @@ const App = () => {
                 <div className="flex flex-col items-center justify-center h-full">
                     <div className="w-16 h-16 border-4 border-gold-accent/30 border-t-gold-accent rounded-full animate-spin mb-6"></div>
                     <h3 className="text-xl font-bold text-gold-dark font-serif">AI đang kiến tạo bài dạy tinh hoa...</h3>
-                    <p className="text-sm text-slate-500 mt-2 font-medium italic">Đang tích hợp Năng lực số (TT 02) & Trình độ AI (QĐ 3439)</p>
+                    <p className="text-sm text-slate-500 mt-2 font-medium italic">Đang tích hợp Năng lực số (TT 02) & Tích hợp AI (QĐ 3439)</p>
                 </div>
             )}
 

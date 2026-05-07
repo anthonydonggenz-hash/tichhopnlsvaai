@@ -60,24 +60,37 @@ export const exportToDocx = async (fullData: ResultData) => {
     })
   );
 
-  // I. Objectives
-  sections.push(
-    new Paragraph({ heading: HeadingLevel.HEADING_3, children: [new TextRun({ text: "I. MỤC TIÊU", bold: true, break: 2 })] }),
-    new Paragraph({ children: [new TextRun({ text: "1. Về kiến thức:", bold: true })] }),
-    ...data.objectives.knowledge.map(item => new Paragraph({ bullet: { level: 0 }, children: [new TextRun(stripHtml(item))] })),
-    
-    new Paragraph({ children: [new TextRun({ text: "2. Về năng lực:", bold: true, break: 1 })] }),
-    ...data.objectives.competency.map(item => new Paragraph({ bullet: { level: 0 }, children: [new TextRun(stripHtml(item))] })),
-    
-    new Paragraph({ children: [new TextRun({ text: "3. Về phẩm chất:", bold: true, break: 1 })] }),
-    ...data.objectives.quality.map(item => new Paragraph({ bullet: { level: 0 }, children: [new TextRun(stripHtml(item))] }))
-  );
-
-  // II. Materials
-  sections.push(
-    new Paragraph({ heading: HeadingLevel.HEADING_3, children: [new TextRun({ text: "II. THIẾT BỊ DẠY HỌC VÀ HỌC LIỆU", bold: true, break: 2 })] }),
-    ...data.materials.map(item => new Paragraph({ bullet: { level: 0 }, children: [new TextRun(stripHtml(item))] }))
-  );
+    // I. Objectives
+    const objectiveSections = [
+      new Paragraph({ heading: HeadingLevel.HEADING_3, children: [new TextRun({ text: "I. MỤC TIÊU", bold: true, break: 2 })] }),
+      new Paragraph({ children: [new TextRun({ text: "1. Về kiến thức:", bold: true })] }),
+      ...data.objectives.knowledge.map(item => new Paragraph({ 
+        bullet: { level: 0 }, 
+        children: getHighlightParts(item).map(p => new TextRun({ text: p.text, color: p.highlight ? "FF0000" : undefined, bold: p.highlight })) 
+      })),
+      
+      new Paragraph({ children: [new TextRun({ text: "2. Về năng lực:", bold: true, break: 1 })] }),
+      ...data.objectives.competency.map(item => new Paragraph({ 
+        bullet: { level: 0 }, 
+        children: getHighlightParts(item).map(p => new TextRun({ text: p.text, color: p.highlight ? "FF0000" : undefined, bold: p.highlight })) 
+      })),
+      
+      new Paragraph({ children: [new TextRun({ text: "3. Về phẩm chất:", bold: true, break: 1 })] }),
+      ...data.objectives.quality.map(item => new Paragraph({ 
+        bullet: { level: 0 }, 
+        children: getHighlightParts(item).map(p => new TextRun({ text: p.text, color: p.highlight ? "FF0000" : undefined, bold: p.highlight })) 
+      }))
+    ];
+    sections.push(...objectiveSections);
+  
+    // II. Materials
+    sections.push(
+      new Paragraph({ heading: HeadingLevel.HEADING_3, children: [new TextRun({ text: "II. THIẾT BỊ DẠY HỌC VÀ HỌC LIỆU", bold: true, break: 2 })] }),
+      ...data.materials.map(item => new Paragraph({ 
+        bullet: { level: 0 }, 
+        children: getHighlightParts(item).map(p => new TextRun({ text: p.text, color: p.highlight ? "FF0000" : undefined, bold: p.highlight })) 
+      }))
+    );
 
   // III. Activities
   sections.push(
@@ -249,28 +262,6 @@ export const renderWordHTML = (fullData: ResultData): string => {
 
     <h3>III. TIẾN TRÌNH DẠY HỌC</h3>
     ${activitiesHtml}
-
-    <br clear="all" style="page-break-before:always" />
-    <h2 style="text-align: center; text-transform: uppercase; color: #C5A021; border-bottom: 2px solid #C5A021; padding-bottom: 10px;">PHỤ LỤC 1: TỔNG HỢP TÍCH HỢP NĂNG LỰC SỐ</h2>
-    <p>${fullData.digitalPack.summary}</p>
-    <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
-      <thead>
-        <tr style="background-color: #f2f2f2;">
-          <th style="border: 1px solid black; padding: 5px;">Hoạt động</th>
-          <th style="border: 1px solid black; padding: 5px;">Mã NL Số</th>
-          <th style="border: 1px solid black; padding: 5px;">Công cụ/Hành động</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${fullData.digitalPack.mapping.map(m => `
-          <tr>
-            <td style="border: 1px solid black; padding: 5px;">${m.activity}</td>
-            <td style="border: 1px solid black; padding: 5px;">${m.competencyCode}</td>
-            <td style="border: 1px solid black; padding: 5px;"><b>${m.tool}:</b> ${m.action}</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
 
     </body></html>
   `;

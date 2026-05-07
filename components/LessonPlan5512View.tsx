@@ -26,8 +26,7 @@ const LessonPlan5512View: React.FC<Props> = ({ fullData, onTransform, onElaborat
   const [expandedSections, setExpandedSections] = useState({
     objectives: true,
     materials: true,
-    activities: data.activities ? data.activities.map(() => true) : [],
-    appendix1: true
+    activities: data.activities ? data.activities.map(() => true) : []
   });
 
   // Function to strip or keep highlights based on highlightMode
@@ -43,6 +42,15 @@ const LessonPlan5512View: React.FC<Props> = ({ fullData, onTransform, onElaborat
     newActivities[index] = !newActivities[index];
     setExpandedSections({...expandedSections, activities: newActivities});
   };
+
+  const getRegulationInfo = (grade: string) => {
+    if (grade === 'Mầm Non') return { title: 'DỰ THẢO KẾ HOẠCH TỔ CHỨC HOẠT ĐỘNG', sub: '(Theo Thông tư 49/2020/TT-BGDĐT)' };
+    const g = parseInt(grade);
+    if (!isNaN(g) && g >= 1 && g <= 5) return { title: 'KẾ HOẠCH BÀI DẠY', sub: '(Theo Công văn số 2345/BGDĐT-GDTH)' };
+    return { title: 'KHUNG KẾ HOẠCH BÀI DẠY', sub: '(Kèm theo Công văn số 5512/BGDĐT-GDTrH)' };
+  };
+
+  const regInfo = getRegulationInfo(data.grade);
 
   return (
     <div className="a4-container font-serif text-[#1e1e1e] relative">
@@ -63,10 +71,10 @@ const LessonPlan5512View: React.FC<Props> = ({ fullData, onTransform, onElaborat
 
       {/* Header Công văn */}
       <div className="text-center mb-8 border-b-2 border-slate-100 pb-6">
-        <p className="font-bold text-sm uppercase text-slate-500 mb-1 font-sans">KHUNG KẾ HOẠCH BÀI DẠY</p>
-        <p className="italic text-xs text-slate-400 font-sans">(Kèm theo Công văn số 5512/BGDĐT-GDTrH)</p>
+        <p className="font-bold text-sm uppercase text-slate-500 mb-1 font-sans">{regInfo.title}</p>
+        <p className="italic text-xs text-slate-400 font-sans">{regInfo.sub}</p>
         <p className="font-bold text-sm text-gold-accent mt-2 font-sans flex items-center justify-center gap-2">
-            <Check size={14} /> Căn cứ: Thông tư 02/2025/TT-BGDĐT & Quyết định 3439/QĐ-BGDĐT
+            <Check size={14} /> Căn cứ: Thông tư 02 & Quyết định 3439/QĐ-BGDĐT
         </p>
         {mode === 'integration' && (
           <div className="inline-block mt-3 px-4 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-bold uppercase tracking-wider">
@@ -195,20 +203,6 @@ const LessonPlan5512View: React.FC<Props> = ({ fullData, onTransform, onElaborat
               </div>
               
               <div className="flex items-center gap-2 text-slate-500 text-sm">
-                  <div className="hidden group-hover:flex items-center gap-1 mr-2 animate-fade-in">
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onTransform(index, 'gamification'); }}
-                      className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-[10px] font-bold border border-yellow-200 hover:bg-yellow-200"
-                    >
-                      Trò chơi hoá
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); onTransform(index, 'flipped'); }}
-                      className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-bold border border-blue-200 hover:bg-blue-200"
-                    >
-                      Lớp học đảo ngược
-                    </button>
-                  </div>
                  <span className="hidden sm:inline italic font-sans text-xs">
                    {expandedSections.activities[index] ? 'Thu gọn' : 'Xem chi tiết'}
                  </span>
@@ -320,44 +314,6 @@ const LessonPlan5512View: React.FC<Props> = ({ fullData, onTransform, onElaborat
       </div>
 
       {/* PHỤ LỤC 1: TỔNG HỢP TÍCH HỢP NĂNG LỰC SỐ */}
-      <div className="mt-12 pt-8 border-t-2 border-gold-primary/30">
-        <div className="flex items-center justify-between mb-4">
-           <h3 className="font-bold text-xl text-gold-dark uppercase flex items-center gap-3">
-             <Database size={24} /> PHỤ LỤC 1: TỔNG HỢP TÍCH HỢP NĂNG LỰC SỐ
-           </h3>
-           <button onClick={() => setExpandedSections(p => ({...p, appendix1: !p.appendix1}))} className="p-2 hover:bg-gold-light rounded-full transition-colors">
-             {expandedSections.appendix1 ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-           </button>
-        </div>
-        
-        {expandedSections.appendix1 && fullData.digitalPack && (
-          <div className="animate-fade-in bg-gold-light/30 p-6 rounded-xl border border-gold-primary/20">
-            <p className="mb-4 text-sm italic text-slate-600">{fullData.digitalPack.summary}</p>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse bg-white rounded-lg overflow-hidden shadow-sm">
-                <thead>
-                  <tr className="bg-gold-accent text-white text-sm">
-                    <th className="p-3 text-left border border-gold-accent">Hoạt động</th>
-                    <th className="p-3 text-left border border-gold-accent">Mã NL Số</th>
-                    <th className="p-3 text-left border border-gold-accent">Công cụ & Hành động</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm">
-                  {fullData.digitalPack.mapping && fullData.digitalPack.mapping.map((m, i) => (
-                    <tr key={i} className="hover:bg-gold-light/10 transition-colors">
-                      <td className="p-3 border border-slate-200 font-medium">{m.activity}</td>
-                      <td className="p-3 border border-slate-200"><span className="px-2 py-0.5 bg-slate-100 rounded text-[10px] font-bold">{m.competencyCode}</span></td>
-                      <td className="p-3 border border-slate-200">
-                        <span className="font-bold text-gold-dark">{m.tool}:</span> {m.action}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
