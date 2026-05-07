@@ -44,10 +44,10 @@ const LessonPlan5512View: React.FC<Props> = ({ fullData, onTransform, onElaborat
   };
 
   const getRegulationInfo = (grade: string) => {
-    if (grade === 'Mầm Non') return { title: 'DỰ THẢO KẾ HOẠCH TỔ CHỨC HOẠT ĐỘNG', sub: '(Theo Thông tư 49/2020/TT-BGDĐT)' };
+    if (grade === 'Mầm Non') return { title: 'DỰ THẢO KẾ HOẠCH TỔ CHỨC HOẠT ĐỘNG', sub: '(Theo Thông tư 49)' };
     const g = parseInt(grade);
-    if (!isNaN(g) && g >= 1 && g <= 5) return { title: 'KẾ HOẠCH BÀI DẠY', sub: '(Theo Công văn số 2345/BGDĐT-GDTH)' };
-    return { title: 'KHUNG KẾ HOẠCH BÀI DẠY', sub: '(Kèm theo Công văn số 5512/BGDĐT-GDTrH)' };
+    if (!isNaN(g) && g >= 1 && g <= 5) return { title: 'KẾ HOẠCH BÀI DẠY', sub: '(Theo Công văn 2345)' };
+    return { title: 'KHUNG KẾ HOẠCH BÀI DẠY', sub: '(Theo Công văn 5512)' };
   };
 
   const regInfo = getRegulationInfo(data.grade);
@@ -74,7 +74,7 @@ const LessonPlan5512View: React.FC<Props> = ({ fullData, onTransform, onElaborat
         <p className="font-bold text-sm uppercase text-slate-500 mb-1 font-sans">{regInfo.title}</p>
         <p className="italic text-xs text-slate-400 font-sans">{regInfo.sub}</p>
         <p className="font-bold text-sm text-gold-accent mt-2 font-sans flex items-center justify-center gap-2">
-            <Check size={14} /> Căn cứ: Thông tư 02 & Quyết định 3439/QĐ-BGDĐT
+            <Check size={14} /> Căn cứ: Thông tư 02 & Quyết định 3439
         </p>
         {mode === 'integration' && (
           <div className="inline-block mt-3 px-4 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-[10px] font-bold uppercase tracking-wider">

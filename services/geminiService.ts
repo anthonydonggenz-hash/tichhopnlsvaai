@@ -73,15 +73,15 @@ export const generateLessonPlan = async (
     const ai = new GoogleGenAI({ apiKey });
 
     // Determine regulation based on grade
-    let gradeInfo = { level: 'Trung học', regulation: 'Công văn 5512/BGDĐT-GDTrH' };
+    let gradeInfo = { level: 'Trung học', regulation: 'Công văn 5512' };
     if (formData.grade === 'Mầm Non') {
-      gradeInfo = { level: 'Mầm non', regulation: 'Thông tư 49/2020/TT-BGDĐT' };
+      gradeInfo = { level: 'Mầm non', regulation: 'Thông tư 49' };
     } else {
       const g = parseInt(formData.grade);
       if (g >= 1 && g <= 5) {
-        gradeInfo = { level: 'Tiểu học', regulation: 'Công văn 2345/BGDĐT-GDTH' };
+        gradeInfo = { level: 'Tiểu học', regulation: 'Công văn 2345' };
       } else if (g >= 6 && g <= 12) {
-        gradeInfo = { level: 'Trung học', regulation: 'Công văn 5512/BGDĐT-GDTrH' };
+        gradeInfo = { level: 'Trung học', regulation: 'Công văn 5512' };
       }
     }
 
@@ -102,23 +102,39 @@ export const generateLessonPlan = async (
     YÊU CẦU TÍCH HỢP CHI TIẾT:
     ${isTT02 ? `
     CĂN CỨ THÔNG TƯ 02 (NĂNG LỰC SỐ):
-    - Mã chỉ báo phải SÂU và CHI TIẾT (Ví dụ: 1.1.2, 2.3.1, 5.2.1...).
-    - Mô tả hành động số cụ thể của HS: HS làm gì với công cụ số để đạt năng lực đó.
-    MẪU: <span style="color:red">[TÍCH HỢP NĂNG LỰC SỐ - TT 02]
-    Mã chỉ báo chi tiết: [Mã 3 chữ số]
-    Nội dung tích hợp: [Mô tả chi tiết hành vi số]
-    Công cụ số: [Tên công cụ]</span>
+    - Mã chỉ báo phải CỰC KỲ CHI TIẾT theo cú pháp: (NLS x.x – TCx.x – CBx.x.x – Bậc …). 
+      Trong đó: x.x là miền và năng lực thành phần, TC là tiêu chí, CB là chỉ báo cụ thể từ khung NLS.
+    - Phải mô tả hành động số cụ thể của học sinh.
     ` : ''}
 
     ${isQD3439 ? `
     CĂN CỨ QUYẾT ĐỊNH 3439 (AI):
-    - Chèn nội dung hướng dẫn sử dụng AI (Prompting, Phản biện AI, Đạo đức AI).
-    - Hướng dẫn HS cách kiểm chứng kết quả từ AI.
-    MẪU: <span style="color:red">[TÍCH HỢP AI - QĐ 3439]
-    Năng lực AI: [Mã NL theo QĐ 3439]
-    Hoạt động với AI: [Cách HS tương tác với AI]
-    Lưu ý sư phạm: [Phản biện, không lạm dụng]</span>
+    - Chỉ tích hợp nếu bài học thực sự phù hợp với AI.
+    - Mã năng lực AI theo cú pháp: AI: (NLa / NLb / NLc / NLd).
+      + NLa: Tư duy lấy con người làm trung tâm.
+      + NLb: Đạo đức AI.
+      + NLc: Các kĩ thuật và ứng dụng AI.
+      + NLd: Thiết kế hệ thống AI.
     ` : ''}
+
+    CẤU TRÚC KHỐI CHÈN (PHẢI TUÂN THỦ 100%):
+    <span style="color:red">
+    🔴 [Tích hợp NLS & AI]
+    - Năng lực: [Ghi đủ mã NLS và mã AI nếu chọn cả hai]
+    - Mô tả: [Mô tả hành vi tích hợp cụ thể, thực tế]
+
+    🔴 [GV]
+    - [Hướng dẫn từng bước cho giáo viên triển khai, có thể nêu tên AI tool cụ thể nếu cần]
+
+    🔴 [HS]
+    - [Hành động cụ thể, rõ ràng của học sinh]
+
+    🔴 [Sản phẩm]
+    - [Sản phẩm số hoặc sản phẩm AI cụ thể mà HS tạo ra]
+
+    🔴 [Đánh giá]
+    - [Tiêu chí đánh giá dựa trên CB Năng lực số hoặc Năng lực AI]
+    </span>
 
     ĐỊNH DẠNG ĐẦU RA: JSON.
     JSON Schema (BẮT BUỘC):
